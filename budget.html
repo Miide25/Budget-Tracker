@@ -216,7 +216,7 @@
                     const budget = this.budgets[category];
                     const div = document.createElement('div');
                     div.className = 'budget-category';
-                    div.innerHTML = `${category}: <span class="amount">$${budget.limit.toFixed(2)} (Spent: $${budget.spent.toFixed(2)})</span>`;
+                    div.innerHTML = `${category}: <span class="amount">NGN${budget.limit.toFixed(2)} (Spent: NGN${budget.spent.toFixed(2)})</span>`;
                     
                     // Create a delete button
                     const deleteButton = document.createElement('button');
