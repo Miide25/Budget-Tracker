@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="IMG-20241114-WA0028.jpg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <title>Advanced Finance Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #2c2c2c;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: #333;
+        }
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .icon-button {
+            background: #333;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #444;
+        }
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .tab.active {
+            border-bottom: 2px solid #ff6b6b;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 1rem;
+            background-color: #333;
+            text-align: center;
+        }
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .summary-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        .income { color: #4ecdc4; }
+        .expenses { color: #ff6b6b; }
+        .calendar {
+            padding: 1rem;
+        }
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #3a3a3a;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .day:hover {
+            background-color: #4a4a4a;
+        }
+        .day.active {
+            background-color: #ff6b6b;
+        }
+        .day.today {
+            border: 2px solid #4ecdc4;
+        }
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+        }
+        .fab {
+            position: fixed;
+            bottom: 5rem;
+            right: 1rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            background-color: #ff6b6b;
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        nav {
+    display: flex;
+    justify-content: space-around;
+    background-color: #333;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #888;
+    justify-content: space-around;
+    padding: 1rem;
+    background-color: #333;
+}
+.nav-item.active {
+    color: #ff6b6b;
+}
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #2c2c2c;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 400px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #fff;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        input, select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #fff;
+        }
+        button[type="submit"] {
+            background-color: #4ecdc4;
+            color: #fff;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .transaction-list {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .transaction {
+            background-color: #333;
+            padding: 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .account-list {
+            padding: 1rem;
+        }
+        .account {
+            background-color: #333;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+        .budget-list {
+            padding: 1rem;
+        }
+        .budget-item {
+            background-color: #333;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #4a4a4a;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4ecdc4;
+        }
+        /* Calculator Styles */
+        #calculator {
+            padding: 1rem;
+        }
+        .calculator-screen {
+            width: 100%;
+            font-size: 2rem;
+            height: 60px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            text-align: right;
+            padding-right: 20px;
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+        .calculator-keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+        }
+        .calculator-keys button {
+            height: 60px;
+            background-color: #4a4a4a;
+            border: 1px solid #333;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+        }
+        .calculator-keys button:hover {
+            background-color: #5a5a5a;
+        }
+        .calculator-keys .operator {
+            background-color: #ff6b6b;
+        }
+        .calculator-keys .operator:hover {
+            background-color: #ff8c8c;
+        }
+        .calculator-keys .equal-sign {
+            background-color: #4ecdc4;
+            grid-column: -2;
+            grid-row: 2 / span 4;
+            height: auto;
+        }
+        .calculator-keys .equal-sign:hover {
+            background-color: #6fe7d9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="date-nav">
+                <button class="icon-button" id="prevMonth">&#10094;</button>
+                <span id="currentMonth">November 2024</span>
+                <button class="icon-button" id="nextMonth">&#10095;</button>
+            </div>
+            <div>
+                <select id="currencySelector" class="icon-button">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="NGN">NGN</option>
+                </select>
+                <button class="icon-button" id="exportData">&#128190;</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-view="calendar">Calendar</button>
+            <button class="tab" data-view="transactions">Transactions</button>
+            <button class="tab" data-view="calculator">Calculator</button>
+            <button class="tab" data-view="accounts">Accounts</button>
+         
+        </div>
+
+        <div class="summary">
+            <div class="summary-item">
+                <span class="summary-label">Income</span>
+                <span class="income" id="totalIncome">$0.00</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Expenses</span>
+                <span class="expenses" id="totalExpenses">$0.00</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total</span>
+                <span id="total">$0.00</span>
+            </div>
+        </div>
+
+        <div id="calendarView" class="calendar">
+            <div class="weekdays">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+            </div>
+            <div class="days" id="calendarDays"></div>
+        </div>
+
+        <div id="transactionList" class="transaction-list" style="display: none;"></div>
+
+        <div id="calculator" style="display: none;">
+            <input type="text" class="calculator-screen" value="" disabled />
+            <div class="calculator-keys">
+                <button type="button" class="operator" value="+">+</button>
+                <button type="button" class="operator" value="-">-</button>
+                <button type="button" class="operator" value="*">&times;</button>
+                <button type="button" class="operator" value="/">&divide;</button>
+
+                <button type="button" value="7">7</button>
+                <button type="button" value="8">8</button>
+                <button type="button" value="9">9</button>
+
+                <button type="button" value="4">4</button>
+                <button type="button" value="5">5</button>
+                <button type="button" value="6">6</button>
+
+                <button type="button" value="1">1</button>
+                <button type="button" value="2">2</button>
+                <button type="button" value="3">3</button>
+
+                <button type="button" value="0">0</button>
+                <button type="button" class="decimal" value=".">.</button>
+                <button type="button" class="all-clear" value="all-clear">AC</button>
+
+                <button type="button" class="equal-sign operator" value="=">=</button>
+            </div>
+        </div>
+
+        <div id="accountsView" class="account-list" style="display: none;"></div>
+
+        <div id="budgetsView" class="budget-list" style="display: none;"></div>
+
+        <div class="empty-state" id="emptyState">
+            <div style="font-size: 3rem;">🤖</div>
+            <p>No data available.</p>
+        </div>
+
+        <button class="fab" id="addTransaction">+</button>
+
+        <nav>
+            <a href="#" class="nav-item active" data-view="calendar">
+                <span>&#128197;</span>
+                <span>Calendar</span>
+            </a>
+            <a href="#" class="nav-item" data-view="transactions">
+                <span>&#128200;</span>
+                <span>Trans.</span>
+            </a>
+            <a href="#" class="nav-item" data-view="calculator">
+                <span>&#128202;</span>
+                <span>Calculator</span>
+            </a>
+            <a href="#" class="nav-item" data-view="accounts">
+                <span>&#128176;</span>
+                <span>Accounts</span>
+            </a>
+            
+        </nav>
+    </div>
+
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add Transaction</h2>
+            <form id="transactionForm">
+                <input type="date" id="transactionDate" required>
+                <input type="number" id="transactionAmount" placeholder="Amount" step="0.01" required>
+                <select id="transactionType" required>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+                <select id="transactionCategory" required>
+                    <option value="">Select Category</option>
+                    <option value="food">Food</option>
+                    <option value="transport">Transport</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="salary">Salary</option>
+                    <option value="other">Other</option>
+                </select>
+                <select id="transactionAccount" required>
+                    <option value="">Select Account</option>
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank Account</option>
+                    <option value="credit">Credit Card</option>
+                </select>
+                <input type="text" id="transactionDescription" placeholder="Description" required>
+                <button type="submit">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const currentMonthElement = document.getElementById('currentMonth');
+        const calendarDays = document.getElementById('calendarDays');
+        const prevMonthButton = document.getElementById('prevMonth');
+        const nextMonthButton = document.getElementById('nextMonth');
+        const addTransactionButton = document.getElementById('addTransaction');
+        const transactionModal = document.getElementById('transactionModal');
+        const closeModal = document.getElementsByClassName('close')[0];
+        const transactionForm = document.getElementById('transactionForm');
+        const transactionList = document.getElementById('transactionList');
+        const emptyState = document.getElementById('emptyState');
+        const totalIncomeElement = document.getElementById('totalIncome');
+        const totalExpensesElement = document.getElementById('totalExpenses');
+        const totalElement = document.getElementById('total');
+        const exportDataButton = document.getElementById('exportData');
+
+        let currentDate = new Date();
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let accounts = JSON.parse(localStorage.getItem('accounts')) || [
+            { id: 'cash', name: 'Cash', balance: 0 },
+            { id: 'bank', name: 'Bank Account', balance: 0 },
+            { id: 'credit', name: 'Credit Card', balance: 0 }
+        ];
+        let budgets = JSON.parse(localStorage.getItem('budgets')) || [
+            { category: 'food', limit: 500 },
+            { category: 'transport', limit: 200 },
+            { category: 'utilities', limit: 300 },
+            { category: 'entertainment', limit: 150 }
+        ];
+
+        let currentCurrency = 'USD';
+        const currencySymbols = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'NGN': '₦'
+        };
+
+        function updateCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            currentMonthElement.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            calendarDays.innerHTML = '';
+
+            for (let i = 0; i < startingDay; i++) {
+                calendarDays.innerHTML += '<div></div>';
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day');
+                dayElement.textContent = i;
+
+                if (year === new Date().getFullYear() && month === new Date().getMonth() && i === new Date().getDate()) {
+                    dayElement.classList.add('today');
+                }
+
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                if (transactions.some(t => t.date === dateString)) {
+                    dayElement.classList.add('active');
+                }
+
+                dayElement.addEventListener('click', () => showTransactionsForDate(dateString));
+
+                calendarDays.appendChild(dayElement);
+            }
+        }
+
+        function showTransactionsForDate(date) {
+            const dayTransactions = transactions.filter(t => t.date === date);
+            transactionList.innerHTML = '';
+            
+            if (dayTransactions.length > 0) {
+                dayTransactions.forEach(t => {
+                    const transactionElement = document.createElement('div');
+                    transactionElement.classList.add('transaction');
+                    transactionElement.innerHTML = `
+                        <span>${t.description} (${t.category})</span>
+                        <span class="${t.type === 'income' ? 'income' : 'expenses'}">
+                            ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+                        </span>
+                    `;
+                    transactionList.appendChild(transactionElement);
+                });
+                transactionList.style.display = 'flex';
+                emptyState.style.display = 'none';
+            } else {
+                transactionList.style.display = 'none';
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        function updateSummary() {
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const total = totalIncome - totalExpenses;
+
+            totalIncomeElement.textContent = formatCurrency(totalIncome);
+            totalExpensesElement.textContent = formatCurrency(totalExpenses);
+            totalElement.textContent = formatCurrency(total);
+        }
+
+        function updateAccounts() {
+            const accountsView = document.getElementById('accountsView');
+            accountsView.innerHTML = '';
+            accounts.forEach(account => {
+                const accountElement = document.createElement('div');
+                accountElement.classList.add('account');
+                accountElement.innerHTML = `
+                    <h3>${account.name}</h3>
+                    <p>Balance: ${formatCurrency(account.balance)}</p>
+                `;
+                accountsView.appendChild(accountElement);
+            });
+        }
+
+        function updateBudgets() {
+            const budgetsView = document.getElementById('budgetsView');
+            budgetsView.innerHTML = '';
+            budgets.forEach(budget => {
+                const spent = transactions
+                    .filter(t => t.type === 'expense' && t.category === budget.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const percentage = (spent / budget.limit) * 100;
+                const budgetElement = document.createElement('div');
+                budgetElement.classList.add('budget-item');
+                budgetElement.innerHTML = `
+                    <h3>${budget.category}</h3>
+                    <p>Spent: ${formatCurrency(spent)} / ${formatCurrency(budget.limit)}</p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                budgetsView.appendChild(budgetElement);
+            });
+        }
+
+        function formatCurrency(amount) {
+            return `${currencySymbols[currentCurrency]}${amount.toFixed(2)}`;
+        }
+
+        prevMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            updateCalendar();
+        });
+
+        nextMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            updateCalendar();
+        });
+
+        addTransactionButton.addEventListener('click', () => {
+            transactionModal.style.display = 'block';
+        });
+
+        closeModal.addEventListener('click', () => {
+            transactionModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === transactionModal) {
+                transactionModal.style.display = 'none';
+            }
+        });
+
+        transactionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('transactionDate').value;
+            const amount = parseFloat(document.getElementById('transactionAmount').value);
+            const type = document.getElementById('transactionType').value;
+            const category = document.getElementById('transactionCategory').value;
+            const account = document.getElementById('transactionAccount').value;
+            const description = document.getElementById('transactionDescription').value;
+
+            transactions.push({ date, amount, type, category, account, description });
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Update account balance
+            const accountIndex = accounts.findIndex(a => a.id === account);
+            if (accountIndex !== -1) {
+                accounts[accountIndex].balance += type === 'income' ? amount : -amount;
+                localStorage.setItem('accounts', JSON.stringify(accounts));
+            }
+
+            updateCalendar();
+            updateSummary();
+            updateAccounts();
+            updateBudgets();
+            showTransactionsForDate(date);
+            transactionModal.style.display = 'none';
+            transactionForm.reset();
+        });
+
+        document.querySelectorAll('.tab, .nav-item').forEach(element => {
+            element.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                document.querySelector('.tab.active').classList.remove('active');
+                document.querySelector('.nav-item.active').classList.remove('active');
+                document.querySelector(`.tab[data-view="${view}"]`).classList.add('active');
+                document.querySelector(`.nav-item[data-view="${view}"]`).classList.add('active');
+                
+                // Hide all views
+                document.querySelectorAll('#calendarView, #transactionList, #calculator, #accountsView, #budgetsView, #emptyState').forEach(el => el.style.display = 'none');
+                
+                // Show selected view
+                switch(view) {
+                    case 'calendar':
+                        document.getElementById('calendarView').style.display = 'block';
+                        break;
+                    case 'transactions':
+                        document.getElementById('transactionList').style.display = 'flex';
+                        showTransactionsForDate(new Date().toISOString().split('T')[0]);
+                        break;
+                    case 'calculator':
+                        document.getElementById('calculator').style.display = 'block';
+                        break;
+                    case 'accounts':
+                        document.getElementById('accountsView').style.display = 'block';
+                        updateAccounts();
+                        break;
+                    case 'budgets':
+                        document.getElementById('budgetsView').style.display = 'block';
+                        updateBudgets();
+                        break;
+                }
+            });
+        });
+
+        exportDataButton.addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Format the transactions data for the PDF
+    doc.setFontSize(12);
+    doc.text("Finance Data", 10, 10);
+
+    // Format the transactions as a table or list
+    let yPosition = 20; // Initial Y position for text
+    transactions.forEach((transaction, index) => {
+        const transactionText = `Transaction ${index + 1}: ${JSON.stringify(transaction)}`;
+        doc.text(transactionText, 10, yPosition);
+        yPosition += 10; // Move down for the next entry
+    });
+
+    // Save the PDF with the specified name
+    doc.save("finance_data.pdf");
+});
+
+        document.getElementById('currencySelector').addEventListener('change', (e) => {
+            currentCurrency = e.target.value;
+            updateSummary();
+            updateAccounts();
+            updateBudgets();
+        });
+
+        // Calculator functionality
+        const calculator = {
+            displayValue: '0',
+            firstOperand: null,
+            waitingForSecondOperand: false,
+            operator: null,
+        };
+
+        function inputDigit(digit) {
+            const { displayValue, waitingForSecondOperand } = calculator;
+
+            if (waitingForSecondOperand === true) {
+                calculator.displayValue = digit;
+                calculator.waitingForSecondOperand = false;
+            } else {
+                calculator.displayValue = displayValue === '0' ? digit : displayValue + digit;
+            }
+        }
+
+        function inputDecimal(dot) {
+            if (calculator.waitingForSecondOperand === true) {
+                calculator.displayValue = "0."
+                calculator.waitingForSecondOperand = false;
+                return
+            }
+
+            if (!calculator.displayValue.includes(dot)) {
+                calculator.displayValue += dot;
+            }
+        }
+
+        function handleOperator(nextOperator) {
+            const { firstOperand, displayValue, operator } = calculator
+            const inputValue = parseFloat(displayValue);
+
+            if (operator && calculator.waitingForSecondOperand)  {
+                calculator.operator = nextOperator;
+                return;
+            }
+
+            if (firstOperand == null && !isNaN(inputValue)) {
+                calculator.firstOperand = inputValue;
+            } else if (operator) {
+                const result = calculate(firstOperand, inputValue, operator);
+
+                calculator.displayValue = `${parseFloat(result.toFixed(7))}`;
+                calculator.firstOperand = result;
+            }
+
+            calculator.waitingForSecondOperand = true;
+            calculator.operator = nextOperator;
+        }
+
+        function calculate(firstOperand, secondOperand, operator) {
+            if (operator === '+') {
+                return firstOperand + secondOperand;
+            } else if (operator === '-') {
+                return firstOperand - secondOperand;
+            } else if (operator === '*') {
+                return firstOperand * secondOperand;
+            } else if (operator === '/') {
+                return firstOperand / secondOperand;
+            }
+
+            return secondOperand;
+        }
+
+        function resetCalculator() {
+            calculator.displayValue = '0';
+            calculator.firstOperand = null;
+            calculator.waitingForSecondOperand = false;
+            calculator.operator = null;
+        }
+
+        function updateDisplay() {
+            const display = document.querySelector('.calculator-screen');
+            display.value = calculator.displayValue;
+        }
+
+        updateDisplay();
+
+        const keys = document.querySelector('.calculator-keys');
+        keys.addEventListener('click', (event) => {
+            const { target } = event;
+            if (!target.matches('button')) {
+                return;
+            }
+
+            if (target.classList.contains('operator')) {
+                handleOperator(target.value);
+                updateDisplay();
+                return;
+            }
+
+            if (target.classList.contains('decimal')) {
+                inputDecimal(target.value);
+                updateDisplay();
+                return;
+            }
+
+            if (target.classList.contains('all-clear')) {
+                resetCalculator();
+                updateDisplay();
+                return;
+            }
+
+            inputDigit(target.value);
+            updateDisplay();
+        });
+
+        updateCalendar();
+        updateSummary();
+        updateAccounts();
+        updateBudgets();
+    </script>
+</body>
+</html>
